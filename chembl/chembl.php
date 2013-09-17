@@ -43,7 +43,7 @@ class ChemblParser extends RDFFactory {
 
 	function __construct($argv) {
 		parent::__construct();
-			$this->SetDefaultNamespace("chembl");
+			//$this->SetDefaultNamespace("chembl");
 			
 			// set and print application parameters
 			$this->AddParameter('files',true,'all|compounds|targets|assays|references|properties','','files to process');
@@ -55,7 +55,10 @@ class ChemblParser extends RDFFactory {
 			$this->AddParameter('user',false,false,'dba','set the user to access the mysql chembl database');
 			$this->AddParameter('pass',false,false,'dba','set the password of the user to access the mysql chembl database');
 			$this->AddParameter('db_name',false,null,'chembl_14','set the database table to configure/access the mysql database');
+			$this->AddParameter('db_host',false,null,'127.0.0.1','set the database hostname');
+			$this->AddParameter('db_port',false,null,'3306','set the database port');
 			$this->AddParameter('download_url',false,null,'ftp://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/latest/');
+			$this->AddParameter('remote_filename',false,null,'chembl_17_mysql.tar.gz');
 			
 			if($this->SetParameters($argv) == FALSE) {
 				$this->PrintParameters($argv);
@@ -86,7 +89,7 @@ class ChemblParser extends RDFFactory {
 				$this->process_references();
 				break;
 			case "all":
-				$this->all();
+				$this->process_all();
 				break;
 		}
 	}
@@ -96,10 +99,10 @@ class ChemblParser extends RDFFactory {
 	*/
 	function download(){
 		//where to download the files
-		$local_file = $this->GetParameterValue('outdir')."chembl_14_mysql.tar.gz";
-		$remote_file = "chembl_14_mysql.tar.gz";
+		$remote_file = $this->GetParameterValue('remote_filename'); 
+		$local_file = $this->GetParameterValue('outdir').$remote_file;
 
-		$connection  = ftp_connect($this->GetParameterValue('download_uri'));
+		$connection  = ftp_connect($this->GetParameterValue('download_url'));
 		$login_result = ftp_login($connection,"","");
 
 		if(ftp_get($connection,$local_file,$remote_file)) {
@@ -116,8 +119,8 @@ class ChemblParser extends RDFFactory {
 	*/
 	function load_chembl_mysql() {
 		//mysql -u username -p < dump/file/path/filename.sql
-		$local_file = $this->GetParameterValue("outdir")."chembl_14_mysql.tar.gz";
-		$dump_cmd = "mysql -u ".$this->GetParameterValue("user")." -p ".$this->GetParameterValue("pass")." ".$this->GetParameterValue("db_name")." < ".$local_file;
+		$local_file = $this->GetParameterValue("outdir")."chembl_17_mysql/chembl_17.mysqldump.sql";
+		$dump_cmd = "mysql -u ".$this->GetParameterValue("user")." -p ".$this->GetParameterValue("pass")." -P ".$this->GetParameterValue("port")." -h ".$this->GetParameterValue("db_hostname")." ".$this->GetParameterValue("db_name")." < ".$local_file;
 		
 		if(shell_exec($dump_cmd)){
 			echo "Successfully loaded the chembl mysql database.\n";
@@ -289,8 +292,10 @@ class ChemblParser extends RDFFactory {
 	function connect_to_db(){
 		$user = $this->GetParameterValue("user");
 		$pwd = $this->GetParameterValue("pass");
+		$db_host = $this->GetParameterValue('db_host');
+		$db_port = $this->GetParameterValue('db_port');
 		$db = $this->GetParameterValue('db_name');
-		mysql_connect("127.0.0.1",$user,$pwd) or die(mysql_error()) ;
+		mysql_connect($db_host.':'.$db_port,$user,$pwd) or die(mysql_error()) ;
 		mysql_select_db($db) or die(mysql_error());
 	}
 
