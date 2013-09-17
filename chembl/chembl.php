@@ -389,7 +389,7 @@ class ChemblParser extends RDFFactory {
 
 		  //chembl assay id
 		  $chembl = "chembl:". $row['chembl_id'];
-		  $this->AddRDF($this->QQuadl($assay,"dc:identifier"),$row['chembl_id']));
+		  $this->AddRDF($this->QQuadl($assay,"dc:identifier",$row['chembl_id']));
 		  $this->AddRDF($this->QQuad($assay,"owl:equivalentClass",$chembl));
 		  $this->AddRDF($this->QQuad($chembl,"owl:equivalentClass",$assay));
 		  $this->WriteRDFBufferToWriteFile();
@@ -542,3 +542,4 @@ $parser = new ChemblParser($argv);
 $parser->Run();
 
 ?>
+
